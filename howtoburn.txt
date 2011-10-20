@@ -1,0 +1,7 @@
+u-boot at the beginning of the "boot" partition
+
+dd if=u-boot.bin of=/dev/sdd2  
+
+
+Linux a 1 Mb offset
+dd if=uImage of=/dev/sdd  bs=512 seek=2048
