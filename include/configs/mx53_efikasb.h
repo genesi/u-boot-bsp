@@ -86,6 +86,7 @@
 
 #include <config_cmd_default.h>
 
+#define CONFIG_CMD_NET
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_DHCP
 #define CONFIG_CMD_MII
@@ -112,46 +113,64 @@
 #define CONFIG_CMD_CLOCK
 #define CONFIG_REF_CLK_FREQ CONFIG_MX53_HCLK_FREQ
 
-#define CONFIG_CMD_SATA
 #undef CONFIG_CMD_IMLS
 
 #define CONFIG_BOOTDELAY	3
 
-#define CONFIG_PRIME	"FEC0"
+#define CONFIG_KERNEL_ADDR	0x70007FC0
+#define CONFIG_RD_ADDR		0x707FFFC0
+#define CONFIG_DT_ADDR		0x71800000
+#define CONFIG_SCRIPT_ADDR	0x71810000
+#define CONFIG_LOADADDR		CONFIG_SCRIPT_ADDR
 
-#define CONFIG_LOADADDR		0x70800000	/* loadaddr env var */
-#define CONFIG_RD_LOADADDR	(CONFIG_LOADADDR + 0x300000)
+#define CONFIG_EFIKAMX_MODEL "slim"
+#define U_BOOT_TIMESTAMP "20130624142414"
 
-#define	CONFIG_EXTRA_ENV_SETTINGS					\
-		"netdev=eth0\0"						\
-		"ethprime=FEC0\0"					\
-		"uboot=u-boot.bin\0"			\
-		"kernel=uImage\0"				\
-		"nfsroot=/opt/eldk/arm\0"				\
-		"loadaddr  0x70800000\0"				\
-		"bootargs_base=setenv bootargs console=ttymxc0,115200 video=mxcdi0fb:RGB666,WSVGA ldb ldb=di0\0"\
-		"bootargs_nfs=setenv bootargs ${bootargs} root=/dev/nfs "\
-			"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0"\
-		"bootcmd_net=run bootargs_base bootargs_nfs; "		\
-			"tftpboot ${loadaddr} ${kernel}; bootm\0"	\
-		"bootargs_mmc=setenv bootargs ${bootargs}  "	\
-			"root=/dev/mmcblk0p1 rootwait\0"	\
-		"bootcmd_mmc=run bootargs_base bootargs_mmc; mmc read 0 ${loadaddr} 0x800 0x1800; bootm\0"	\
-		"bootargs_nand=setenv bootargs ${bootargs} " \
-			"rootfstype=ubifs ubi.mtd=2 root=ubi0:rootfs rootwait\0"	\
-		"bootcmd_nand=run bootargs_base bootargs_nand; mmc read 0 ${loadaddr} 0x800 0x1800; bootm\0"	\
-		"bootcmd=run bootcmd_nand\0"	\
-	\
+#define XADDR(a) #a
+#define ADDR(a) XADDR(a)
 
-#define CONFIG_ARP_TIMEOUT	200UL
+#define CONFIG_EXTRA_ENV_SETTINGS \
+	"fdt_high=0xffffffff\0" \
+	"initrd_high=0xffffffff\0" \
+	"model=" CONFIG_EFIKAMX_MODEL "\0" \
+	"firmware_version=" U_BOOT_TIMESTAMP "\0" \
+	"bootscript=boot.scr\0" \
+	"kerneladdr=" ADDR(CONFIG_KERNEL_ADDR) "\0" \
+	"ramdiskaddr=" ADDR(CONFIG_RD_ADDR) "\0" \
+	"dtbaddr=" ADDR(CONFIG_DT_ADDR) "\0" \
+	"scriptaddr=" ADDR(CONFIG_SCRIPT_ADDR) "\0" \
+	"bootdevices=mmc\0" \
+	"units=0\0" \
+	"console=ttymxc0,115200n8\0" \
+	"bootargs=console=${console}"
+
+#define CONFIG_BOOTCOMMAND \
+	"mmc rescan; " \
+	"for device in ${bootdevices}; do " \
+		"for unit in ${units}; do " \
+			"mmcinfo; " \
+			"for part in \"1 2 3\"; do " \
+				"for fs in \"ext2 fat\"; do " \
+					"setenv loadcmd \"${fs}load ${device} ${unit}:${part}\"; " \
+					"if ${loadcmd} ${scriptaddr} ${bootscript}; then " \
+						"if imi ${scriptaddr}; then " \
+							"source ${scriptaddr}; " \
+						"fi; " \
+					"fi; " \
+				"done; " \
+			"done; " \
+		"done; " \
+	"done; "
 
 /*
  * Miscellaneous configurable options
  */
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */
-#define CONFIG_SYS_PROMPT		"> "
+#define CONFIG_SYS_PROMPT		"Slimbook> "
+#define CONFIG_SYS_PROMPT_HUSH_PS2	CONFIG_SYS_PROMPT
 #define CONFIG_AUTO_COMPLETE
-#define CONFIG_SYS_CBSIZE		256	/* Console I/O Buffer Size */
+#define CONFIG_SYS_HUSH_PARSER
+#define CONFIG_SYS_CBSIZE		1024	/* Console I/O Buffer Size */
 /* Print Buffer Size */
 #define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
 #define CONFIG_SYS_MAXARGS	16	/* max number of command args */
@@ -168,10 +187,10 @@
 
 #define CONFIG_CMDLINE_EDITING	1
 
-#define CONFIG_FEC0_IOBASE	FEC_BASE_ADDR
-#define CONFIG_FEC0_PINMUX	-1
-#define CONFIG_FEC0_PHY_ADDR	-1
-#define CONFIG_FEC0_MIIBASE	-1
+#define CONFIG_FEC0_IOBASE     FEC_BASE_ADDR
+#define CONFIG_FEC0_PINMUX     -1
+#define CONFIG_FEC0_PHY_ADDR   -1
+#define CONFIG_FEC0_MIIBASE    -1
 
 #define CONFIG_GET_FEC_MAC_ADDR_FROM_IIM
 #define CONFIG_IIM_MAC_ADDR_OFFSET      0x24
@@ -210,7 +229,6 @@
 	#define CONFIG_IMX_MMC
 	#define CONFIG_SYS_FSL_ESDHC_NUM        2
 	#define CONFIG_SYS_FSL_ESDHC_ADDR       0
-	#define CONFIG_SYS_MMC_ENV_DEV  0
 	#define CONFIG_DOS_PARTITION	1
 	#define CONFIG_CMD_FAT		1
 	#define CONFIG_CMD_EXT2		1
@@ -260,30 +278,8 @@
  * FLASH and environment organization
  */
 #define CONFIG_SYS_NO_FLASH
-
-/* Monitor at beginning of flash */
-//#define CONFIG_FSL_ENV_IN_MMC
-/* #define CONFIG_FSL_ENV_IN_SATA */
-
-#define CONFIG_ENV_SECT_SIZE    (128 * 1024)
+#define CONFIG_ENV_SECT_SIZE    (32 * 1024)
 #define CONFIG_ENV_SIZE         CONFIG_ENV_SECT_SIZE
+#define CONFIG_ENV_IS_NOWHERE	1
 
-#if defined(CONFIG_FSL_ENV_IN_NAND)
-	#define CONFIG_ENV_IS_IN_NAND 1
-	#define CONFIG_ENV_OFFSET	0x100000
-#elif defined(CONFIG_FSL_ENV_IN_MMC)
-	#define CONFIG_ENV_IS_IN_MMC	1
-	#define CONFIG_ENV_OFFSET	(768 * 1024)
-#elif defined(CONFIG_FSL_ENV_IN_SATA)
-	#define CONFIG_ENV_IS_IN_SATA   1
-	#define CONFIG_SATA_ENV_DEV     0
-	#define CONFIG_ENV_OFFSET       (768 * 1024)
-#elif defined(CONFIG_FSL_ENV_IN_SF)
-	#define CONFIG_ENV_IS_IN_SPI_FLASH	1
-	#define CONFIG_ENV_SPI_CS		1
-	#define CONFIG_ENV_OFFSET       (768 * 1024)
-#else
-	#warning nowhere!
-	#define CONFIG_ENV_IS_NOWHERE	1
-#endif
 #endif				/* __CONFIG_H */
