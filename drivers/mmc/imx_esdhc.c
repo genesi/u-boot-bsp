@@ -187,7 +187,7 @@ esdhc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 	 * Note: This is way more than 8 cycles, but 1ms seems to
 	 * resolve timing issues with some cards
 	 */
-	udelay(10000);
+	udelay(100);
 
 	/* Set up for a data transfer if we have one */
 	if (data) {
@@ -323,7 +323,7 @@ void set_sysctl(struct mmc *mmc, uint clock)
 	tmp = (readl(&regs->sysctl) & (~SYSCTL_CLOCK_MASK)) | clk;
 	writel(tmp, &regs->sysctl);
 
-	udelay(10000);
+	udelay(100);
 
 #ifdef CONFIG_IMX_ESDHC_V1
 	tmp = readl(&regs->sysctl) | SYSCTL_PEREN;
