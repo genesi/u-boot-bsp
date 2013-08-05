@@ -2,7 +2,7 @@
 #define _LINUX_UNALIGNED_GENERIC_H
 
 /* define __force to nothing in U-Boot */
-#define __force
+//#define __force
 
 /*
  * Cause a link-time error if we try an unaligned access other than

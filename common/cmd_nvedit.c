@@ -407,6 +407,21 @@ int setenv (char *varname, char *varvalue)
 		return _do_setenv (0, 3, argv);
 }
 
+/**
+ * Set an environment variable to an value in hex
+ *
+ * @param varname	Environmet variable to set
+ * @param value		Value to set it to
+ * @return 0 if ok, 1 on error
+ */
+int setenv_hex(const char *varname, ulong value)
+{
+	char str[17];
+
+	sprintf(str, "%lx", value);
+	return setenv(varname, str);
+}
+
 #ifdef CONFIG_HAS_UID
 void forceenv (char *varname, char *varvalue)
 {

@@ -155,6 +155,7 @@ int ubi_io_read(const struct ubi_device *ubi, void *buf, int pnum, int offset,
 	addr = (loff_t)pnum * ubi->peb_size + offset;
 retry:
 	err = ubi->mtd->read(ubi->mtd, addr, len, &read, buf);
+	dbg_io("read %d bytes finished with exit %i\n", len, err);
 	if (err) {
 		if (err == -EUCLEAN) {
 			/*

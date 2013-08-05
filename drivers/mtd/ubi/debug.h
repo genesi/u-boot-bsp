@@ -21,6 +21,12 @@
 #ifndef __UBI_DEBUG_H__
 #define __UBI_DEBUG_H__
 
+//#define CONFIG_MTD_UBI_DEBUG
+//#define CONFIG_MTD_UBI_DEBUG_DISABLE_BGT
+//#define CONFIG_MTD_UBI_DEBUG_MSG
+//#define CONFIG_MTD_UBI_DEBUG_MSG_EBA
+//#define CONFIG_MTD_UBI_DEBUG_MSG_IO
+
 #ifdef CONFIG_MTD_UBI_DEBUG
 #ifdef UBI_LINUX
 #include <linux/random.h>

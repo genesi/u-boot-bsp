@@ -310,7 +310,7 @@ static int part_validate_eraseblock(struct mtdids *id, struct part_info *part)
 	struct mtd_info *mtd;
 	char mtd_dev[16];
 	int i, j;
-	ulong start;
+	u64 start;
 
 	sprintf(mtd_dev, "%s%d", MTD_DEV_TYPE(id->type), id->num);
 	mtd = get_mtd_device_nm(mtd_dev);
@@ -322,22 +322,24 @@ static int part_validate_eraseblock(struct mtdids *id, struct part_info *part)
 	part->sector_size = mtd->erasesize;
 
 	if (!mtd->numeraseregions) {
+#if 0
 		/*
 		 * Only one eraseregion (NAND, OneNAND or uniform NOR),
 		 * checking for alignment is easy here
 		 */
-		if ((unsigned long)part->offset % mtd->erasesize) {
+		if (part->offset % (u64)mtd->erasesize) {
 			printf("%s%d: partition (%s) start offset"
 			       "alignment incorrect\n",
 			       MTD_DEV_TYPE(id->type), id->num, part->name);
 			return 1;
 		}
 
-		if (part->size % mtd->erasesize) {
+		if (part->size % (u64)mtd->erasesize) {
 			printf("%s%d: partition (%s) size alignment incorrect\n",
 			       MTD_DEV_TYPE(id->type), id->num, part->name);
 			return 1;
 		}
+#endif
 	} else {
 		/*
 		 * Multiple eraseregions (non-uniform NOR),
@@ -346,11 +348,11 @@ static int part_validate_eraseblock(struct mtdids *id, struct part_info *part)
 
 		/* Check start alignment */
 		for (i = 0; i < mtd->numeraseregions; i++) {
-			start = mtd->eraseregions[i].offset;
+			start = (u64)mtd->eraseregions[i].offset;
 			for (j = 0; j < mtd->eraseregions[i].numblocks; j++) {
 				if (part->offset == start)
 					goto start_ok;
-				start += mtd->eraseregions[i].erasesize;
+				start += (u64)mtd->eraseregions[i].erasesize;
 			}
 		}
 
@@ -362,11 +364,11 @@ static int part_validate_eraseblock(struct mtdids *id, struct part_info *part)
 
 		/* Check end/size alignment */
 		for (i = 0; i < mtd->numeraseregions; i++) {
-			start = mtd->eraseregions[i].offset;
+			start = (u64)mtd->eraseregions[i].offset;
 			for (j = 0; j < mtd->eraseregions[i].numblocks; j++) {
 				if ((part->offset + part->size) == start)
 					goto end_ok;
-				start += mtd->eraseregions[i].erasesize;
+				start += (u64)mtd->eraseregions[i].erasesize;
 			}
 		}
 		/* Check last sector alignment */
@@ -401,7 +403,7 @@ static int part_validate(struct mtdids *id, struct part_info *part)
 		part->size = id->size - part->offset;
 
 	if (part->offset > id->size) {
-		printf("%s: offset %08x beyond flash size %08x\n",
+		printf("%s: offset %llx beyond flash size %llx\n",
 				id->mtd_id, part->offset, id->size);
 		return 1;
 	}
@@ -683,7 +685,7 @@ static int part_parse(const char *const partdef, const char **ret, struct part_i
 	part->name[name_len - 1] = '\0';
 	INIT_LIST_HEAD(&part->link);
 
-	DEBUGF("+ partition: name %-22s size 0x%08x offset 0x%08x mask flags %d\n",
+	DEBUGF("+ partition: name %-22s size 0x%llx offset 0x%llx mask flags %d\n",
 			part->name, part->size,
 			part->offset, part->mask_flags);
 
@@ -697,7 +699,7 @@ static int part_parse(const char *const partdef, const char **ret, struct part_i
  * @param dev device to validate
  * @return 0 if device is valid, 1 otherwise
  */
-int mtd_device_validate(u8 type, u8 num, u32 *size)
+int mtd_device_validate(u8 type, u8 num, u64 *size)
 {
 	struct mtd_info *mtd;
 	char mtd_dev[16];
@@ -1228,7 +1230,7 @@ static void list_partitions(void)
 		part_num = 0;
 		list_for_each(pentry, &dev->parts) {
 			part = list_entry(pentry, struct part_info, link);
-			printf("%2d: %-20s0x%08x\t0x%08x\t%d\n",
+			printf("%2d: %-20s0x%llx\t0x%llx\t%d\n",
 					part_num, part->name, part->size,
 					part->offset, part->mask_flags);
 
@@ -1242,7 +1244,7 @@ static void list_partitions(void)
 	if (current_mtd_dev) {
 		part = mtd_part_info(current_mtd_dev, current_mtd_partnum);
 		if (part) {
-			printf("\nactive partition: %s%d,%d - (%s) 0x%08x @ 0x%08x\n",
+			printf("\nactive partition: %s%d,%d - (%s) 0x%llx @ 0x%llx\n",
 					MTD_DEV_TYPE(current_mtd_dev->id->type),
 					current_mtd_dev->id->num, current_mtd_partnum,
 					part->name, part->size, part->offset);
@@ -1336,7 +1338,7 @@ static int delete_partition(const char *id)
 
 	if (find_dev_and_part(id, &dev, &pnum, &part) == 0) {
 
-		DEBUGF("delete_partition: device = %s%d, partition %d = (%s) 0x%08lx@0x%08lx\n",
+		DEBUGF("delete_partition: device = %s%d, partition %d = (%s) 0x%llx@0x%llx\n",
 				MTD_DEV_TYPE(dev->id->type), dev->id->num, pnum,
 				part->name, part->size, part->offset);
 
@@ -1427,7 +1429,7 @@ static int parse_mtdids(const char *const ids)
 	struct list_head *entry, *n;
 	struct mtdids *id_tmp;
 	u8 type, num;
-	u32 size;
+	u64 size;
 	int ret = 1;
 
 	DEBUGF("\n---parse_mtdids---\nmtdids = %s\n\n", ids);
@@ -1501,7 +1503,7 @@ static int parse_mtdids(const char *const ids)
 		id->mtd_id[mtd_id_len - 1] = '\0';
 		INIT_LIST_HEAD(&id->link);
 
-		DEBUGF("+ id %s%d\t%16d bytes\t%s\n",
+		DEBUGF("+ id %s%d\t%llu bytes\t%s\n",
 				MTD_DEV_TYPE(id->type), id->num,
 				id->size, id->mtd_id);
 

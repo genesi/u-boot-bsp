@@ -11,6 +11,9 @@
  * http://www.gnu.org/copyleft/gpl.html
  */
 
+//#define CONFIG_MTD_DEBUG
+//#define CONFIG_MTD_DEBUG_VERBOSE 3
+
 #include <common.h>
 #include <malloc.h>
 #include <asm/io.h>
@@ -961,14 +964,21 @@ static void mxc_nand_command(struct mtd_info *mtd, unsigned command,
 			/* send read confirm command */
 			send_cmd(mtd, NAND_CMD_READSTART);
 
+		MTDDEBUG(MTD_DEBUG_LEVEL3, "NAND_CMD_READ0 0\n");
 		send_read_page(mtd, 0);
+		MTDDEBUG(MTD_DEBUG_LEVEL3, "NAND_CMD_READ0 1\n");
 
 		if (!info->auto_mode) {
+		MTDDEBUG(MTD_DEBUG_LEVEL3, "NAND_CMD_READ0 2\n");
 			mxc_nand_ecc_status(mtd);
+		MTDDEBUG(MTD_DEBUG_LEVEL3, "NAND_CMD_READ0 3\n");
 			mxc_nand_bi_swap(mtd);
+		MTDDEBUG(MTD_DEBUG_LEVEL3, "NAND_CMD_READ0 4\n");
 			nfc_memcpy(info->data_buf, MAIN_AREA0, mtd->writesize);
+		MTDDEBUG(MTD_DEBUG_LEVEL3, "NAND_CMD_READ0 5\n");
 			copy_spare(mtd, info->oob_buf, SPARE_AREA0,
 						mtd->oobsize, 1);
+		MTDDEBUG(MTD_DEBUG_LEVEL3, "NAND_CMD_READ0 6\n");
 		}
 		break;
 

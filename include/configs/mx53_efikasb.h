@@ -64,7 +64,7 @@
 /*
  * Size of malloc() pool
  */
-#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 2 * 1024 * 1024)
+#define CONFIG_SYS_MALLOC_LEN		(8 * 1024 * 1024)
 /* size in bytes reserved for initial data */
 #define CONFIG_SYS_GBL_DATA_SIZE	128
 
@@ -97,6 +97,14 @@
 #define CONFIG_BOOTP_GATEWAY
 #define CONFIG_BOOTP_DNS
 
+#define CONFIG_CMD_UBI
+#define CONFIG_CMD_UBIFS
+#define CONFIG_CMD_MTDPARTS
+#define CONFIG_MTD_DEVICE
+#define CONFIG_MTD_PARTITIONS
+#define CONFIG_RBTREE
+#define CONFIG_LZO
+
 #define CONFIG_CMD_NAND
 #define CONFIG_MXC_NAND
 /* NAND FLASH driver setup */
@@ -115,7 +123,7 @@
 
 #undef CONFIG_CMD_IMLS
 
-#define CONFIG_BOOTDELAY	3
+#define CONFIG_BOOTDELAY	1
 
 #define CONFIG_KERNEL_ADDR	0x70800000
 #define CONFIG_RD_ADDR		0x70B00000
@@ -139,27 +147,41 @@
 	"ramdiskaddr=" ADDR(CONFIG_RD_ADDR) "\0" \
 	"dtbaddr=" ADDR(CONFIG_DT_ADDR) "\0" \
 	"scriptaddr=" ADDR(CONFIG_SCRIPT_ADDR) "\0" \
-	"bootdevices=mmc\0" \
+	"bootdevices=nand mmc\0" \
 	"units=0\0" \
 	"console=ttymxc0,115200n8\0" \
-	"bootargs=console=${console}"
+	"bootargs=console=${console}\0" \
+	"mtdids=nand0=mxc-nand\0" \
+	"mtdparts=mtdparts=mxc-nand:32m(bootloader)ro,128m(nand.kernel),-(nand.rootfs)"
 
 #define CONFIG_BOOTCOMMAND \
 	"mmc rescan; " \
 	"for device in ${bootdevices}; do " \
-		"for unit in ${units}; do " \
-			"mmcinfo; " \
-			"for part in \"1 2 3\"; do " \
-				"for fs in \"ext2 fat\"; do " \
-					"setenv loadcmd \"${fs}load ${device} ${unit}:${part}\"; " \
+		"if test \"$device\" = \"nand\"; then " \
+			"if ubi part nand0,1; then " \
+				"if ubifsmount ubi:boot; then " \
+					"setenv loadcmd \"ubifsload \"; " \
 					"if ${loadcmd} ${scriptaddr} ${bootscript}; then " \
 						"if imi ${scriptaddr}; then " \
 							"source ${scriptaddr}; " \
 						"fi; " \
 					"fi; " \
+				"fi; " \
+			"fi; " \
+		"fi; " \
+			"for unit in ${units}; do " \
+				"mmcinfo; " \
+				"for part in \"1 2 3\"; do " \
+					"for fs in \"ext2 fat\"; do " \
+						"setenv loadcmd \"${fs}load ${device} ${unit}:${part}\"; " \
+						"if ${loadcmd} ${scriptaddr} ${bootscript}; then " \
+							"if imi ${scriptaddr}; then " \
+								"source ${scriptaddr}; " \
+							"fi; " \
+						"fi; " \
+					"done; " \
 				"done; " \
 			"done; " \
-		"done; " \
 	"done; "
 
 /*
