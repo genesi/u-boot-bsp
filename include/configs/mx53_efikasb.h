@@ -147,7 +147,7 @@
 	"ramdiskaddr=" ADDR(CONFIG_RD_ADDR) "\0" \
 	"dtbaddr=" ADDR(CONFIG_DT_ADDR) "\0" \
 	"scriptaddr=" ADDR(CONFIG_SCRIPT_ADDR) "\0" \
-	"bootdevices=nand mmc\0" \
+	"bootdevices=mmc nand\0" \
 	"units=0\0" \
 	"console=ttymxc0,115200n8\0" \
 	"bootargs=console=${console}\0" \
@@ -169,19 +169,19 @@
 				"fi; " \
 			"fi; " \
 		"fi; " \
-			"for unit in ${units}; do " \
-				"mmcinfo; " \
-				"for part in \"1 2 3\"; do " \
-					"for fs in \"ext2 fat\"; do " \
-						"setenv loadcmd \"${fs}load ${device} ${unit}:${part}\"; " \
-						"if ${loadcmd} ${scriptaddr} ${bootscript}; then " \
-							"if imi ${scriptaddr}; then " \
-								"source ${scriptaddr}; " \
-							"fi; " \
+		"for unit in ${units}; do " \
+			"mmcinfo; " \
+			"for part in \"1 2 3\"; do " \
+				"for fs in \"ext2 fat\"; do " \
+					"setenv loadcmd \"${fs}load ${device} ${unit}:${part}\"; " \
+					"if ${loadcmd} ${scriptaddr} ${bootscript}; then " \
+						"if imi ${scriptaddr}; then " \
+							"source ${scriptaddr}; " \
 						"fi; " \
-					"done; " \
+					"fi; " \
 				"done; " \
 			"done; " \
+		"done; " \
 	"done; "
 
 /*
