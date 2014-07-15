@@ -152,13 +152,13 @@
 	"console=ttymxc0,115200n8\0" \
 	"bootargs=console=${console}\0" \
 	"mtdids=nand0=mxc-nand\0" \
-	"mtdparts=mtdparts=mxc-nand:32m(bootloader)ro,128m(nand.kernel),-(nand.rootfs)"
+	"mtdparts=mtdparts=mxc-nand:1m(bootloader)ro,31m(nand.uboot)ro,128m(nand.kernel),-(nand.rootfs)"
 
 #define CONFIG_BOOTCOMMAND \
 	"mmc rescan; " \
 	"for device in ${bootdevices}; do " \
 		"if test \"$device\" = \"nand\"; then " \
-			"if ubi part nand0,1; then " \
+			"if ubi part nand0,2; then " \
 				"if ubifsmount ubi:boot; then " \
 					"setenv loadcmd \"ubifsload \"; " \
 					"if ${loadcmd} ${scriptaddr} ${bootscript}; then " \
@@ -289,9 +289,9 @@
  */
 #define CONFIG_NR_DRAM_BANKS	1
 #define PHYS_SDRAM_1		CSD0_BASE_ADDR
-#define PHYS_SDRAM_1_SIZE	(512 * 1024 * 1024)
+#define PHYS_SDRAM_1_SIZE	(1024 * 1024 * 1024)
 #define PHYS_SDRAM_2		CSD1_BASE_ADDR
-#define PHYS_SDRAM_2_SIZE	(512 * 1024 * 1024)
+#define PHYS_SDRAM_2_SIZE	(1024 * 1024 * 1024)
 #define iomem_valid_addr(addr, size) \
 	((addr >= PHYS_SDRAM_1 && addr <= (PHYS_SDRAM_1 + PHYS_SDRAM_1_SIZE)) \
 	|| (addr >= PHYS_SDRAM_2 && addr <= (PHYS_SDRAM_2 + PHYS_SDRAM_2_SIZE)))
